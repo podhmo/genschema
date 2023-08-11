@@ -13,16 +13,22 @@ import (
 	"strings"
 
 	"github.com/iancoleman/orderedmap"
+	"github.com/podhmo/flagstruct"
 	"golang.org/x/tools/go/packages"
 )
 
 func main() {
-	if err := run(); err != nil {
+	e := Default()
+	flagstruct.Parse(e.Config.CLIOptions, func(b *flagstruct.Builder) {
+		b.Name = "genschema"
+	})
+
+	if err := run(e, e.Config.Query); err != nil {
 		log.Fatalf("!! %+v", err)
 	}
 }
 
-func run() error {
+func run(e *Extractor, query string) error {
 	fset := token.NewFileSet()
 	ctx := context.Background() // todo: cancel
 	cfg := &packages.Config{
@@ -31,12 +37,6 @@ func run() error {
 		Tests:   false,
 		Mode:    packages.NeedName | packages.NeedTypes,
 	}
-
-	// TODO: <package path>.<symbol>
-	// query := "github.com/podhmo/genschema/examples/structure.S2"
-	// query := "github.com/podhmo/genschema/examples/structure.S3"
-	query := "github.com/podhmo/genschema/examples/structure.Configuration"
-	// query := "github.com/deepmap/oapi-codegen/pkg/codegen.Configuration"
 
 	parts := strings.Split(query, ".")
 	pkgpath := strings.Join(parts[:len(parts)-1], ".")
@@ -70,7 +70,6 @@ func run() error {
 		return fmt.Errorf("%q is not found in %s", name, target)
 	}
 
-	e := Default()
 	doc, err := e.Extract(target, ob.Type(), nil)
 	if err != nil {
 		return fmt.Errorf("extract: %w", err)
@@ -97,9 +96,11 @@ func run() error {
 func Default() *Extractor {
 	return &Extractor{
 		Config: &Config{
-			NameTags:    []string{"json", "yaml", "toml"},
-			OverrideTag: "jsonschema-override",
-			RefRoot:     "$defs",
+			CLIOptions: &CLIOptions{
+				NameTags:    []string{"json", "yaml", "toml"},
+				OverrideTag: "jsonschema-override",
+				RefRoot:     "$defs",
+			},
 			ResolveName: func(c *Config, named *types.Named) string {
 				name := named.Obj().Name()
 				candidates := c.seen[name]
@@ -120,11 +121,17 @@ func Default() *Extractor {
 	}
 }
 
+type CLIOptions struct {
+	Loose       bool     `flag:"loose" help:"if true, treating as additionalProperties:true"`
+	NameTags    []string `flag:"name-tag"`
+	OverrideTag string   `flag:"override-tag"`
+	RefRoot     string   `flag:"ref-root"`
+
+	Query string `flag:"query" required:"true"`
+}
+
 type Config struct {
-	Loose       bool
-	NameTags    []string
-	OverrideTag string
-	RefRoot     string
+	*CLIOptions
 
 	ResolveName func(*Config, *types.Named) string
 	seen        map[string][]types.Type
