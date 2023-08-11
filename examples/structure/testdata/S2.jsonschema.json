@@ -11,7 +11,7 @@
 		},
 		"age": {
 			"$ref": "#/$defs/PInt",
-			"description": ""
+			"description": "age of object"
 		},
 		"nickname": {
 			"type": "string"

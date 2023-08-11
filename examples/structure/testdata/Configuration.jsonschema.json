@@ -57,35 +57,35 @@
 			"properties": {
 				"old-merge-schemas": {
 					"type": "boolean",
-					"description": ""
+					"description": "In the past, we merged schemas for `allOf` by inlining each schema\nwithin the schema list. This approach, though, is incorrect because\n`allOf` merges at the schema definition level, not at the resulting model\nlevel. So, new behavior merges OpenAPI specs but generates different code\nthan we have in the past. Set OldMergeSchemas to true for the old behavior.\nPlease see https://github.com/deepmap/oapi-codegen/issues/531"
 				},
 				"old-enum-conflicts": {
 					"type": "boolean",
-					"description": ""
+					"description": "Enum values can generate conflicting typenames, so we've updated the\ncode for enum generation to avoid these conflicts, but it will result\nin some enum types being renamed in existing code. Set OldEnumConflicts to true\nto revert to old behavior. Please see:\nPlease see https://github.com/deepmap/oapi-codegen/issues/549"
 				},
 				"old-aliasing": {
 					"type": "boolean",
-					"description": ""
+					"description": "It was a mistake to generate a go type definition for every $ref in\nthe OpenAPI schema. New behavior uses type aliases where possible, but\nthis can generate code which breaks existing builds. Set OldAliasing to true\nfor old behavior.\nPlease see https://github.com/deepmap/oapi-codegen/issues/549"
 				},
 				"disable-flatten-additional-properties": {
 					"type": "boolean",
-					"description": ""
+					"description": "When an object contains no members, and only an additionalProperties specification,\nit is flattened to a map. Set"
 				},
 				"disable-required-readonly-as-pointer": {
 					"type": "boolean",
-					"description": ""
+					"description": "When an object property is both required and readOnly the go model is generated\nas a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer.\nPlease see https://github.com/deepmap/oapi-codegen/issues/604"
 				},
 				"always-prefix-enum-values": {
 					"type": "boolean",
-					"description": ""
+					"description": "When set to true, always prefix enum values with their type name instead of only\nwhen typenames would be conflicting."
 				},
 				"apply-chi-middleware-first-to-last": {
 					"type": "boolean",
-					"description": ""
+					"description": "Our generated code for Chi has historically inverted the order in which Chi middleware is\napplied such that the last invoked middleware ends up executing first in the Chi chain\nThis resolves the behavior such that middlewares are chained in the order they are invoked.\nPlease see https://github.com/deepmap/oapi-codegen/issues/786"
 				},
 				"apply-gorilla-middleware-first-to-last": {
 					"type": "boolean",
-					"description": ""
+					"description": "Our generated code for gorilla/mux has historically inverted the order in which gorilla/mux middleware is\napplied such that the last invoked middleware ends up executing first in the middlewares chain\nThis resolves the behavior such that middlewares are chained in the order they are invoked.\nPlease see https://github.com/deepmap/oapi-codegen/issues/841"
 				}
 			},
 			"description": "CompatibilityOptions specifies backward compatibility settings for the\ncode generator."

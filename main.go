@@ -273,7 +273,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 			if commentInfo != nil && commentInfo.Fields != nil {
 				if cf, ok := commentInfo.Fields[field.Name()]; ok {
 					if cf.Doc != "" {
-						fieldDef.Set("description", strings.TrimSpace(cf.Comment))
+						fieldDef.Set("description", strings.TrimSpace(cf.Doc))
 					} else if cf.Comment != "" {
 						fieldDef.Set("description", strings.TrimSpace(cf.Comment))
 					}
