@@ -5,6 +5,16 @@ type S struct {
 	Age  int    `json:"age"`
 }
 
+type PositiveInt int64
+type PInt PositiveInt
+
+type S2 struct {
+	Name string `json:"name"` // name of object
+
+	// age of object
+	Age PInt `json:"age"`
+}
+
 // TODO:
 // - unexported field
 // - json `-`

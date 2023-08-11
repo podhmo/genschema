@@ -32,7 +32,7 @@ func run() error {
 	}
 
 	// TODO: <package path>.<symbol>
-	query := "github.com/podhmo/genschema/examples/structure.S"
+	query := "github.com/podhmo/genschema/examples/structure.S2"
 
 	parts := strings.Split(query, ".")
 	pkgpath := strings.Join(parts[:len(parts)-1], ".")
@@ -99,10 +99,12 @@ func extract(pkg *packages.Package, typ types.Type, named *types.Named) (*ordere
 				name = v
 			}
 			// TODO: guess type
+			// TODO: description
 			fieldDef := orderedmap.New()
 			fieldDef.Set("type", guessType(field.Type()))
 			props.Set(name, fieldDef)
 		}
+		// TODO: required
 		return doc, nil
 	default:
 		return nil, fmt.Errorf("unexpected type %s", typ)
@@ -110,5 +112,17 @@ func extract(pkg *packages.Package, typ types.Type, named *types.Named) (*ordere
 	}
 }
 func guessType(typ types.Type) string {
-	return typ.Underlying().String() // TODO: integer
+	switch inner := typ.Underlying().String(); inner {
+	case "int", "int64":
+		return "integer"
+	case "bool":
+		return "boolean"
+	case "float", "float64":
+		return "number"
+	case "string", "[]byte": // xxx
+		return "string"
+	default:
+		return inner
+	}
+
 }
