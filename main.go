@@ -8,6 +8,7 @@ import (
 	"go/types"
 	"log"
 	"os"
+	"os/exec"
 	"reflect"
 	"strconv"
 	"strings"
@@ -23,7 +24,16 @@ func main() {
 		b.Name = "genschema"
 	})
 
-	if err := run(e, e.Config.Query); err != nil {
+	query := e.Config.Query
+	if strings.HasPrefix(query, ".") {
+		b, err := exec.Command("go", "list").Output()
+		if err != nil {
+			log.Fatalf("go list is failed")
+		}
+		log.Printf("guess query: %q -> %q", query, strings.TrimSpace(string(b))+query)
+		query = strings.TrimSpace(string(b)) + query
+	}
+	if err := run(e, query); err != nil {
 		log.Fatalf("!! %+v", err)
 	}
 }
