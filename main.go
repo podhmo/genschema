@@ -70,7 +70,16 @@ func run() error {
 		return fmt.Errorf("extract: %w", err)
 	}
 
-	doc.Set(e.Config.RefRoot, e.Config.defs)
+	if e.Config.useCounts[ob.Type()] >= 1 {
+		refname := e.Config.ResolveName(e.Config, ob.Type().(*types.Named))
+		e.Config.defs[refname] = doc
+		doc = orderedmap.New()
+		doc.Set("$ref", refname)
+	}
+	if len(e.Config.defs) > 0 {
+		doc.Set(e.Config.RefRoot, e.Config.defs)
+	}
+
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "\t")
 	if err := enc.Encode(doc); err != nil {
@@ -98,8 +107,9 @@ func Default() *Extractor {
 				}
 				return fmt.Sprintf("%s????", name)
 			},
-			seen: map[string][]types.Type{},
-			defs: map[string]*orderedmap.OrderedMap{},
+			seen:      map[string][]types.Type{},
+			defs:      map[string]*orderedmap.OrderedMap{},
+			useCounts: map[types.Type]int{},
 		},
 	}
 }
@@ -113,6 +123,7 @@ type Config struct {
 	ResolveName func(*Config, *types.Named) string
 	seen        map[string][]types.Type
 	defs        map[string]*orderedmap.OrderedMap
+	useCounts   map[types.Type]int
 }
 
 type Extractor struct {
@@ -128,11 +139,13 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 		for _, t := range seen[name] {
 			if t == typ {
 				ret := orderedmap.New()
-				id := e.Config.ResolveName(e.Config, typ)
-				ret.Set("$ref", fmt.Sprintf("#/%s/%s", e.Config.RefRoot, id))
+				refname := e.Config.ResolveName(e.Config, typ)
+				ret.Set("$ref", fmt.Sprintf("#/%s/%s", e.Config.RefRoot, refname))
+				e.Config.useCounts[typ]++
 				return ret, nil
 			}
 		}
+
 		seen[name] = append(seen[name], typ)
 		doc, err := e.Extract(pkg, typ.Underlying(), append(hist, typ))
 		if err != nil {
@@ -143,10 +156,10 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 			return doc, nil
 		}
 
-		id := e.Config.ResolveName(e.Config, typ)
-		e.Config.defs[id] = doc
+		refname := e.Config.ResolveName(e.Config, typ)
+		e.Config.defs[refname] = doc
 		ret := orderedmap.New()
-		ret.Set("$ref", fmt.Sprintf("#/%s/%s", e.Config.RefRoot, id))
+		ret.Set("$ref", fmt.Sprintf("#/%s/%s", e.Config.RefRoot, refname))
 		return ret, nil
 	case *types.Struct:
 		doc := e.guessType(typ)
@@ -217,6 +230,25 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 		}
 		// TODO: required
 		return doc, nil
+	case *types.Map:
+		doc := e.guessType(typ)
+		items, err := e.Extract(pkg, typ.Elem(), append(hist, typ))
+		if err != nil {
+			return nil, fmt.Errorf("unexported type %T: %w", typ, err)
+		}
+		doc.Set("additionalProperties", items)
+		return doc, nil
+	case interface { // slices,array
+		types.Type
+		Elem() types.Type
+	}:
+		doc := e.guessType(typ)
+		items, err := e.Extract(pkg, typ.Elem(), append(hist, typ))
+		if err != nil {
+			return nil, fmt.Errorf("unexported type %T: %w", typ, err)
+		}
+		doc.Set("items", items)
+		return doc, nil
 	default:
 		doc := e.guessType(typ)
 		if doc == nil {
@@ -249,13 +281,11 @@ func (e *Extractor) guessType(typ types.Type) *orderedmap.OrderedMap {
 	case *types.Slice:
 		doc := orderedmap.New()
 		doc.Set("type", "array")
-		doc.Set("items", e.guessType(t.Elem()))
 		return doc
 	case *types.Array:
 		doc := orderedmap.New()
 		doc.Set("type", "array")
 		doc.Set("maxItems", t.Len())
-		doc.Set("items", e.guessType(t.Elem()))
 		return doc
 	case *types.Map:
 		doc := orderedmap.New()

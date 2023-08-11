@@ -32,6 +32,8 @@ type S3 struct {
 	Unnamed struct {
 		Name Name `json:"name"`
 	} `json:"unnamed,omitempty"`
+
+	// Children []S3 `json:"children"`
 }
 
 type Sub2 struct {
