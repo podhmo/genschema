@@ -1,0 +1,158 @@
+{
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"package": {
+			"type": "string"
+		},
+		"generate": {
+			"$ref": "#/$defs/GenerateOptions"
+		},
+		"compatibility": {
+			"$ref": "#/$defs/CompatibilityOptions"
+		},
+		"output-options": {
+			"$ref": "#/$defs/OutputOptions"
+		},
+		"import-mapping": {
+			"type": "object",
+			"additionalProperties": {
+				"type": "string"
+			}
+		},
+		"additional-imports": {
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/AdditionalImport"
+			}
+		}
+	},
+	"required": [
+		"package"
+	],
+	"$defs": {
+		"AdditionalImport": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"alias": {
+					"type": "string"
+				},
+				"package": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"package"
+			]
+		},
+		"CompatibilityOptions": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"old-merge-schemas": {
+					"type": "boolean"
+				},
+				"old-enum-conflicts": {
+					"type": "boolean"
+				},
+				"old-aliasing": {
+					"type": "boolean"
+				},
+				"disable-flatten-additional-properties": {
+					"type": "boolean"
+				},
+				"disable-required-readonly-as-pointer": {
+					"type": "boolean"
+				},
+				"always-prefix-enum-values": {
+					"type": "boolean"
+				},
+				"apply-chi-middleware-first-to-last": {
+					"type": "boolean"
+				},
+				"apply-gorilla-middleware-first-to-last": {
+					"type": "boolean"
+				}
+			}
+		},
+		"GenerateOptions": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"chi-server": {
+					"type": "boolean"
+				},
+				"fiber-server": {
+					"type": "boolean"
+				},
+				"echo-server": {
+					"type": "boolean"
+				},
+				"gin-server": {
+					"type": "boolean"
+				},
+				"gorilla-server": {
+					"type": "boolean"
+				},
+				"strict-server": {
+					"type": "boolean"
+				},
+				"client": {
+					"type": "boolean"
+				},
+				"models": {
+					"type": "boolean"
+				},
+				"embedded-spec": {
+					"type": "boolean"
+				}
+			}
+		},
+		"OutputOptions": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"skip-fmt": {
+					"type": "boolean"
+				},
+				"skip-prune": {
+					"type": "boolean"
+				},
+				"include-tags": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"exclude-tags": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"user-templates": {
+					"type": "object",
+					"additionalProperties": {
+						"type": "string"
+					}
+				},
+				"exclude-schemas": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"response-type-suffix": {
+					"type": "string"
+				},
+				"client-type-name": {
+					"type": "string"
+				},
+				"initialism-overrides": {
+					"type": "boolean"
+				}
+			}
+		}
+	}
+}
