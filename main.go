@@ -126,7 +126,9 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 			// TODO: guess type
 			// TODO: description
 			fieldDef := guessType(field.Type())
-			props.Set(name, fieldDef)
+			if fieldDef != nil {
+				props.Set(name, fieldDef)
+			}
 		}
 		// TODO: required
 		return doc, nil
@@ -171,7 +173,17 @@ func guessType(typ types.Type) *orderedmap.OrderedMap {
 		doc.Set("type", "object")
 		doc.Set("additionalProperties", guessType(t.Elem()))
 		return doc
+	case *types.Interface:
+		if t.NumMethods() == 0 {
+			doc := orderedmap.New()
+			doc.Set("type", "object")
+			doc.Set("additionalProperties", true)
+			doc.Set("description", "any (interface{})")
+			return doc
+		}
+		return nil
 	default:
-		panic(fmt.Sprintf("unexpected type %T", typ))
+		log.Printf("unexpected type %T", typ)
+		return nil
 	}
 }

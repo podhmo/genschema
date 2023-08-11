@@ -1,5 +1,7 @@
 package structure
 
+import "fmt"
+
 type S struct {
 	Name string `json:"name"`
 	Age  int    `json:"age"`
@@ -20,6 +22,9 @@ type S2 struct {
 	Items   map[string]int `json:"items"`
 
 	Ignored string `json:"-"`
+
+	Greeting fmt.Stringer
+	Any      any
 }
 
 // TODO:
