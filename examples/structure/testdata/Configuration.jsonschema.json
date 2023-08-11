@@ -6,7 +6,8 @@
 	"additionalProperties": false,
 	"properties": {
 		"package": {
-			"type": "string"
+			"type": "string",
+			"description": "PackageName to generate"
 		},
 		"generate": {
 			"$ref": "#/$defs/GenerateOptions"
@@ -21,7 +22,8 @@
 			"type": "object",
 			"additionalProperties": {
 				"type": "string"
-			}
+			},
+			"description": "ImportMapping specifies the golang package path for each external reference"
 		},
 		"additional-imports": {
 			"type": "array",
@@ -54,108 +56,137 @@
 			"additionalProperties": false,
 			"properties": {
 				"old-merge-schemas": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": ""
 				},
 				"old-enum-conflicts": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": ""
 				},
 				"old-aliasing": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": ""
 				},
 				"disable-flatten-additional-properties": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": ""
 				},
 				"disable-required-readonly-as-pointer": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": ""
 				},
 				"always-prefix-enum-values": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": ""
 				},
 				"apply-chi-middleware-first-to-last": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": ""
 				},
 				"apply-gorilla-middleware-first-to-last": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": ""
 				}
-			}
+			},
+			"description": "CompatibilityOptions specifies backward compatibility settings for the\ncode generator."
 		},
 		"GenerateOptions": {
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
 				"chi-server": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "ChiServer specifies whether to generate chi server boilerplate"
 				},
 				"fiber-server": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "FiberServer specifies whether to generate fiber server boilerplate"
 				},
 				"echo-server": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "EchoServer specifies whether to generate echo server boilerplate"
 				},
 				"gin-server": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "GinServer specifies whether to generate gin server boilerplate"
 				},
 				"gorilla-server": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "GorillaServer specifies whether to generate Gorilla server boilerplate"
 				},
 				"strict-server": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "Strict specifies whether to generate strict server wrapper"
 				},
 				"client": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "Client specifies whether to generate client boilerplate"
 				},
 				"models": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "Models specifies whether to generate type definitions"
 				},
 				"embedded-spec": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "Whether to embed the swagger spec in the generated code"
 				}
-			}
+			},
+			"description": "GenerateOptions specifies which supported output formats to generate."
 		},
 		"OutputOptions": {
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
 				"skip-fmt": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "Whether to skip go imports on the generated code"
 				},
 				"skip-prune": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "Whether to skip pruning unused components on the generated code"
 				},
 				"include-tags": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					}
+					},
+					"description": "Only include operations that have one of these tags. Ignored when empty."
 				},
 				"exclude-tags": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					}
+					},
+					"description": "Exclude operations that have one of these tags. Ignored when empty."
 				},
 				"user-templates": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					}
+					},
+					"description": "Override built-in templates from user-provided files"
 				},
 				"exclude-schemas": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					}
+					},
+					"description": "Exclude from generation schemas with given names. Ignored when empty."
 				},
 				"response-type-suffix": {
-					"type": "string"
+					"type": "string",
+					"description": "The suffix used for responses types"
 				},
 				"client-type-name": {
-					"type": "string"
+					"type": "string",
+					"description": "Override the default generated client type with the value"
 				},
 				"initialism-overrides": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "Whether to use the initialism overrides"
 				}
-			}
+			},
+			"description": "OutputOptions are used to modify the output code in some way."
 		}
 	}
 }

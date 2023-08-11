@@ -23,7 +23,8 @@
 	},
 	"$defs": {
 		"Name": {
-			"type": "string"
+			"type": "string",
+			"description": "name of something"
 		},
 		"Sub2": {
 			"type": "object",
@@ -35,7 +36,8 @@
 			},
 			"required": [
 				"name"
-			]
+			],
+			"description": "named sub-struct"
 		}
 	}
 }

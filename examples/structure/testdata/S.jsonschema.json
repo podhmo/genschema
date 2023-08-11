@@ -6,10 +6,12 @@
 	"additionalProperties": false,
 	"properties": {
 		"name": {
-			"type": "string"
+			"type": "string",
+			"description": "name of object"
 		},
 		"age": {
-			"type": "integer"
+			"type": "integer",
+			"description": ""
 		}
 	},
 	"required": [

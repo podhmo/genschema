@@ -2,14 +2,18 @@ package structure
 
 import "fmt"
 
+// target object
 type S struct {
-	Name string `json:"name"`
-	Age  int    `json:"age"`
+	Name string `json:"name"` // name of object
+
+	// age of object
+	Age int `json:"age"`
 }
 
 type PositiveInt int64
 type PInt PositiveInt
 
+// target object
 type S2 struct {
 	Name string `json:"name"` // name of object
 
@@ -36,10 +40,12 @@ type S3 struct {
 	// Children []S3 `json:"children"`
 }
 
+// named sub-struct
 type Sub2 struct {
 	Name Name `json:"name"`
 }
 
+// name of something
 type Name string
 
 // TODO:

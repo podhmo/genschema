@@ -6,10 +6,12 @@
 	"additionalProperties": false,
 	"properties": {
 		"name": {
-			"type": "string"
+			"type": "string",
+			"description": "name of object"
 		},
 		"age": {
-			"$ref": "#/$defs/PInt"
+			"$ref": "#/$defs/PInt",
+			"description": ""
 		},
 		"nickname": {
 			"type": "string"
