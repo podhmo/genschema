@@ -33,7 +33,7 @@ func run() error {
 	}
 
 	// TODO: <package path>.<symbol>
-	query := "github.com/podhmo/genschema/examples/structure.S3"
+	query := "github.com/podhmo/genschema/examples/structure.S2"
 
 	parts := strings.Split(query, ".")
 	pkgpath := strings.Join(parts[:len(parts)-1], ".")
@@ -195,7 +195,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 
 			fieldDef, err := e.Extract(pkg, field.Type(), append(hist, typ))
 			if err != nil {
-				log.Printf("field %s %+v of %s", field, err, typ)
+				log.Printf("%s in %s -- %+v", field, hist[len(hist)-1], err)
 				continue
 			}
 			props.Set(name, fieldDef)
@@ -252,7 +252,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 	default:
 		doc := e.guessType(typ)
 		if doc == nil {
-			return nil, fmt.Errorf("unexpected type: %T", typ)
+			return nil, fmt.Errorf("unexpected type: %T, %s", typ, typ)
 		}
 		return doc, nil
 	}
