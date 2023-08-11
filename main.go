@@ -115,7 +115,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 			name := field.Name()
 			for _, nametag := range e.Config.NameTags {
 				if v, ok := tag.Lookup(nametag); ok {
-					name = v
+					name, _, _ = strings.Cut(v, ",") // e.g. omitempty with json tag
 					break
 				}
 			}

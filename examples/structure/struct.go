@@ -14,6 +14,8 @@ type S2 struct {
 	// age of object
 	Age PInt `json:"age"`
 
+	Nickname string `json:"nickname,omitempty"`
+
 	Ignored string `json:"-"`
 }
 
