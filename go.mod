@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/iancoleman/orderedmap v0.3.0
+	github.com/podhmo/commentof v0.1.4
 	github.com/podhmo/flagstruct v0.5.0
 	golang.org/x/tools v0.12.0
 )

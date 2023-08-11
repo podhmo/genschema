@@ -14,6 +14,8 @@ import (
 	"strings"
 
 	"github.com/iancoleman/orderedmap"
+	"github.com/podhmo/commentof"
+	"github.com/podhmo/commentof/collect"
 	"github.com/podhmo/flagstruct"
 	"golang.org/x/tools/go/packages"
 )
@@ -57,7 +59,7 @@ func run(e *Extractor, query string) error {
 		Fset:    fset,
 		Context: ctx,
 		Tests:   false,
-		Mode:    packages.NeedName | packages.NeedTypes,
+		Mode:    packages.NeedName | packages.NeedTypes | packages.NeedSyntax,
 	}
 
 	parts := strings.Split(query, ".")
@@ -92,7 +94,20 @@ func run(e *Extractor, query string) error {
 		return fmt.Errorf("%q is not found in %s", name, target)
 	}
 
-	doc, err := e.Extract(target, ob.Type(), nil)
+	pos := ob.Pos()
+	for _, tree := range target.Syntax {
+		if tree.Pos() <= pos && pos <= tree.End() {
+			commentInfo, err := commentof.File(fset, tree)
+			if err != nil {
+				log.Printf("failed to load comments, %s", fset.File(tree.Pos()).Name())
+				break
+			}
+			e.Config.commentInfo = commentInfo
+			break
+		}
+	}
+
+	doc, err := e.Extract(target, ob.Type(), nil, nil)
 	if err != nil {
 		return fmt.Errorf("extract: %w", err)
 	}
@@ -157,16 +172,19 @@ type Config struct {
 	*CLIOptions
 
 	ResolveName func(*Config, *types.Named) string
-	seen        map[string][]types.Type
-	defs        map[string]*orderedmap.OrderedMap
-	useCounts   map[types.Type]int
+
+	seen      map[string][]types.Type
+	defs      map[string]*orderedmap.OrderedMap
+	useCounts map[types.Type]int
+
+	commentInfo *collect.Package
 }
 
 type Extractor struct {
 	Config *Config
 }
 
-func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.Type) (*orderedmap.OrderedMap, error) {
+func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.Type, commentInfo *collect.Object) (*orderedmap.OrderedMap, error) {
 	switch typ := typ.(type) {
 	case *types.Named:
 		seen := e.Config.seen
@@ -183,13 +201,29 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 		}
 
 		seen[name] = append(seen[name], typ)
-		doc, err := e.Extract(pkg, typ.Underlying(), append(hist, typ))
+		description := ""
+		if e.Config.commentInfo != nil {
+			if v, ok := e.Config.commentInfo.Types[name]; ok {
+				commentInfo = v
+				if commentInfo.Doc != "" {
+					description = strings.TrimSpace(commentInfo.Doc)
+				} else if commentInfo.Comment != "" {
+					description = strings.TrimSpace(commentInfo.Comment)
+				}
+			}
+		}
+
+		doc, err := e.Extract(pkg, typ.Underlying(), append(hist, typ), commentInfo)
 		if err != nil {
 			return nil, err
 		}
 
 		if hist == nil {
 			return doc, nil
+		}
+
+		if description != "" {
+			doc.Set("description", description)
 		}
 
 		refname := e.Config.ResolveName(e.Config, typ)
@@ -229,12 +263,22 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 
 			// TODO: description
 
-			fieldDef, err := e.Extract(pkg, field.Type(), append(hist, typ))
+			fieldDef, err := e.Extract(pkg, field.Type(), append(hist, typ), commentInfo)
 			if err != nil {
 				log.Printf("%s in %s -- %+v", field, hist[len(hist)-1], err)
 				continue
 			}
 			props.Set(name, fieldDef)
+
+			if commentInfo != nil && commentInfo.Fields != nil {
+				if cf, ok := commentInfo.Fields[field.Name()]; ok {
+					if cf.Doc != "" {
+						fieldDef.Set("description", strings.TrimSpace(cf.Comment))
+					} else if cf.Comment != "" {
+						fieldDef.Set("description", strings.TrimSpace(cf.Comment))
+					}
+				}
+			}
 
 			if v, ok := tag.Lookup("required"); ok {
 				if v, err := strconv.ParseBool(v); err == nil {
@@ -268,7 +312,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 		return doc, nil
 	case *types.Map:
 		doc := e.guessType(typ)
-		items, err := e.Extract(pkg, typ.Elem(), append(hist, typ))
+		items, err := e.Extract(pkg, typ.Elem(), append(hist, typ), commentInfo)
 		if err != nil {
 			return nil, fmt.Errorf("unexported type %T: %w", typ, err)
 		}
@@ -279,7 +323,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 		Elem() types.Type
 	}:
 		doc := e.guessType(typ)
-		items, err := e.Extract(pkg, typ.Elem(), append(hist, typ))
+		items, err := e.Extract(pkg, typ.Elem(), append(hist, typ), commentInfo)
 		if err != nil {
 			return nil, fmt.Errorf("unexported type %T: %w", typ, err)
 		}
