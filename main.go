@@ -33,7 +33,10 @@ func run() error {
 	}
 
 	// TODO: <package path>.<symbol>
-	query := "github.com/podhmo/genschema/examples/structure.S2"
+	// query := "github.com/podhmo/genschema/examples/structure.S2"
+	// query := "github.com/podhmo/genschema/examples/structure.S3"
+	query := "github.com/podhmo/genschema/examples/structure.Configuration"
+	// query := "github.com/deepmap/oapi-codegen/pkg/codegen.Configuration"
 
 	parts := strings.Split(query, ".")
 	pkgpath := strings.Join(parts[:len(parts)-1], ".")
@@ -42,9 +45,6 @@ func run() error {
 	pkgs, err := packages.Load(cfg, pkgpath)
 	if err != nil {
 		return fmt.Errorf("load packages: %w", err)
-	}
-	if packages.PrintErrors(pkgs) > 0 {
-		return fmt.Errorf("invalid package: %q", query)
 	}
 
 	var target *packages.Package
@@ -56,6 +56,12 @@ func run() error {
 	}
 	if target == nil {
 		return fmt.Errorf("%q is not found", query)
+	}
+	if len(target.Errors) > 0 {
+		for _, e := range target.Errors {
+			log.Println(e)
+		}
+		// return fmt.Errorf("invalid package: %q -- %+v", query, target.Errors[0])
 	}
 
 	scope := target.Types.Scope()
