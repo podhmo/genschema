@@ -63,7 +63,8 @@ func run() error {
 		return fmt.Errorf("%q is not found in %s", name, target)
 	}
 
-	doc, err := extract(target, ob.Type(), nil)
+	e := Default()
+	doc, err := e.Extract(target, ob.Type(), nil)
 	if err != nil {
 		return fmt.Errorf("extract: %w", err)
 	}
@@ -76,10 +77,26 @@ func run() error {
 	return nil
 }
 
-func extract(pkg *packages.Package, typ types.Type, named *types.Named) (*orderedmap.OrderedMap, error) {
+func Default() *Extractor {
+	return &Extractor{
+		Config: &Config{
+			NameTags: []string{"json", "yaml", "toml"},
+		},
+	}
+}
+
+type Config struct {
+	NameTags []string
+}
+
+type Extractor struct {
+	Config *Config
+}
+
+func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.Named) (*orderedmap.OrderedMap, error) {
 	switch typ := typ.(type) {
 	case *types.Named:
-		return extract(pkg, typ.Underlying(), typ)
+		return e.Extract(pkg, typ.Underlying(), typ)
 	case *types.Struct:
 		doc := orderedmap.New()
 		doc.Set("type", "object")
@@ -95,9 +112,13 @@ func extract(pkg *packages.Package, typ types.Type, named *types.Named) (*ordere
 
 			tag := reflect.StructTag(typ.Tag(i))
 			name := field.Name()
-			if v, ok := tag.Lookup("json"); ok {
-				name = v
+			for _, nametag := range e.Config.NameTags {
+				if v, ok := tag.Lookup(nametag); ok {
+					name = v
+					break
+				}
 			}
+
 			// TODO: guess type
 			// TODO: description
 			fieldDef := orderedmap.New()
