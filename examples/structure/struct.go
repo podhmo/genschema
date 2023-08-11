@@ -16,6 +16,9 @@ type S2 struct {
 
 	Nickname string `json:"nickname,omitempty"`
 
+	Friends []string       `json:"friends"`
+	Items   map[string]int `json:"items"`
+
 	Ignored string `json:"-"`
 }
 

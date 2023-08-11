@@ -125,8 +125,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 
 			// TODO: guess type
 			// TODO: description
-			fieldDef := orderedmap.New()
-			fieldDef.Set("type", guessType(field.Type()))
+			fieldDef := guessType(field.Type())
 			props.Set(name, fieldDef)
 		}
 		// TODO: required
@@ -136,18 +135,43 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 		// never
 	}
 }
-func guessType(typ types.Type) string {
-	switch inner := typ.Underlying().String(); inner {
-	case "int", "int64":
-		return "integer"
-	case "bool":
-		return "boolean"
-	case "float", "float64":
-		return "number"
-	case "string", "[]byte": // xxx
-		return "string"
+func guessType(typ types.Type) *orderedmap.OrderedMap {
+	switch t := typ.(type) {
+	case *types.Named:
+		return guessType(t.Underlying())
+	case *types.Basic:
+		doc := orderedmap.New()
+		switch t.Kind() {
+		case types.Bool:
+			doc.Set("type", "boolean")
+		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
+			doc.Set("type", "integer")
+		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64:
+			doc.Set("type", "integer")
+			doc.Set("minimum", 0)
+		case types.String: // TODO: []byte
+			doc.Set("type", "string")
+		default:
+			doc.Set("type", fmt.Sprintf("go:%s", t.String())) // invalid
+		}
+		return doc
+	case *types.Slice:
+		doc := orderedmap.New()
+		doc.Set("type", "array")
+		doc.Set("items", guessType(t.Elem()))
+		return doc
+	case *types.Array:
+		doc := orderedmap.New()
+		doc.Set("type", "array")
+		doc.Set("maxItems", t.Len())
+		doc.Set("items", guessType(t.Elem()))
+		return doc
+	case *types.Map:
+		doc := orderedmap.New()
+		doc.Set("type", "object")
+		doc.Set("additionalProperties", guessType(t.Elem()))
+		return doc
 	default:
-		return inner
+		panic(fmt.Sprintf("unexpected type %T", typ))
 	}
-
 }
