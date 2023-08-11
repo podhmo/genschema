@@ -104,6 +104,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 
 		props := orderedmap.New()
 		doc.Set("properties", props)
+
 		for i := 0; i < typ.NumFields(); i++ {
 			field := typ.Field(i)
 			if !token.IsExported(field.Name()) {
@@ -117,6 +118,9 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 					name = v
 					break
 				}
+			}
+			if name == "-" {
+				continue
 			}
 
 			// TODO: guess type
