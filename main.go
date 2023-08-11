@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/iancoleman/orderedmap"
@@ -106,22 +107,33 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 		props := orderedmap.New()
 		doc.Set("properties", props)
 
+		requiredList := make([]string, 0, typ.NumFields())
 		for i := 0; i < typ.NumFields(); i++ {
 			field := typ.Field(i)
-			if !token.IsExported(field.Name()) {
+			if !field.Exported() {
 				continue
 			}
 
 			tag := reflect.StructTag(typ.Tag(i))
 			name := field.Name()
+			required := true
 			for _, nametag := range e.Config.NameTags {
 				if v, ok := tag.Lookup(nametag); ok {
-					name, _, _ = strings.Cut(v, ",") // e.g. omitempty with json tag
+					v, suffix, _ := strings.Cut(v, ",") // e.g. omitempty with json tag
+					if strings.Contains(suffix, "omitempty") {
+						required = false
+					}
+					name = v
 					break
 				}
 			}
 			if name == "-" {
 				continue
+			}
+			if v, ok := tag.Lookup("required"); ok {
+				if v, err := strconv.ParseBool(v); err == nil {
+					required = v
+				}
 			}
 
 			// TODO: guess type
@@ -129,7 +141,14 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 			fieldDef := guessType(field.Type())
 			if fieldDef != nil {
 				props.Set(name, fieldDef)
+				if required {
+					requiredList = append(requiredList, name)
+				}
 			}
+		}
+
+		if len(requiredList) > 0 {
+			doc.Set("required", requiredList)
 		}
 		// TODO: required
 		return doc, nil

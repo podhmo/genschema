@@ -14,7 +14,7 @@ type S2 struct {
 	Name string `json:"name"` // name of object
 
 	// age of object
-	Age PInt `json:"age"`
+	Age PInt `json:"age" required:"false"`
 
 	Nickname string `json:"nickname,omitempty"`
 
