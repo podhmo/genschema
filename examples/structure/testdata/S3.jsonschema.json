@@ -1,0 +1,38 @@
+{
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"named": {
+			"$ref": "#/$defs/Sub2"
+		},
+		"unnamed": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"name": {
+					"$ref": "#/$defs/Name"
+				}
+			},
+			"required": [
+				"name"
+			]
+		}
+	},
+	"$defs": {
+		"Name": {
+			"type": "string"
+		},
+		"Sub2": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"name": {
+					"$ref": "#/$defs/Name"
+				}
+			},
+			"required": [
+				"name"
+			]
+		}
+	}
+}
