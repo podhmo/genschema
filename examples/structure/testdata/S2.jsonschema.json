@@ -1,0 +1,38 @@
+{
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"name": {
+			"type": "string"
+		},
+		"age": {
+			"type": "integer"
+		},
+		"nickname": {
+			"type": "string"
+		},
+		"friends": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"items": {
+			"type": "object",
+			"additionalProperties": {
+				"type": "integer"
+			}
+		},
+		"Any": {
+			"type": "object",
+			"additionalProperties": true,
+			"description": "any (interface{})",
+			"deprecated": true
+		}
+	},
+	"required": [
+		"name",
+		"friends",
+		"items"
+	]
+}

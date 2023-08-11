@@ -1,3 +1,3 @@
 PHONY: run-example
 run-example:
-	go run ./
+	go run ./ > examples/structure/testdata/S2.jsonschema.json

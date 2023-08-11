@@ -81,14 +81,16 @@ func run() error {
 func Default() *Extractor {
 	return &Extractor{
 		Config: &Config{
-			NameTags: []string{"json", "yaml", "toml"},
+			NameTags:    []string{"json", "yaml", "toml"},
+			OverrideTag: "jsonschema-override",
 		},
 	}
 }
 
 type Config struct {
-	Loose    bool
-	NameTags []string
+	Loose       bool
+	NameTags    []string
+	OverrideTag string
 }
 
 type Extractor struct {
@@ -141,6 +143,21 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 			fieldDef := guessType(field.Type())
 			if fieldDef != nil {
 				props.Set(name, fieldDef)
+				if v, ok := tag.Lookup(e.Config.OverrideTag); ok {
+					b := []byte(strings.ReplaceAll(strings.ReplaceAll(v, `\`, `\\`), "'", "\""))
+					overrides := orderedmap.New()
+					if err := json.Unmarshal(b, &overrides); err != nil { // enable cache?
+						log.Printf("[WARN]  %s: unmarshal json is failed: %q", e.Config.OverrideTag, err)
+					}
+					for _, k := range overrides.Keys() {
+						v, _ := overrides.Get(k)
+						if k == "required" {
+							required = v.(bool)
+							continue
+						}
+						fieldDef.Set(k, v)
+					}
+				}
 				if required {
 					requiredList = append(requiredList, name)
 				}

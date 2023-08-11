@@ -24,7 +24,7 @@ type S2 struct {
 	Ignored string `json:"-"`
 
 	Greeting fmt.Stringer
-	Any      any
+	Any      any `jsonschema-override:"{'required': false, 'deprecated': true}"`
 }
 
 // TODO:
