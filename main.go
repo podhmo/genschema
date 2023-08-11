@@ -86,6 +86,7 @@ func Default() *Extractor {
 }
 
 type Config struct {
+	Loose    bool
 	NameTags []string
 }
 
@@ -100,7 +101,7 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 	case *types.Struct:
 		doc := orderedmap.New()
 		doc.Set("type", "object")
-		doc.Set("additionalProperties", false)
+		doc.Set("additionalProperties", e.Config.Loose)
 
 		props := orderedmap.New()
 		doc.Set("properties", props)
