@@ -33,7 +33,7 @@ func run() error {
 	}
 
 	// TODO: <package path>.<symbol>
-	query := "github.com/podhmo/genschema/examples/structure.S2"
+	query := "github.com/podhmo/genschema/examples/structure.S3"
 
 	parts := strings.Split(query, ".")
 	pkgpath := strings.Join(parts[:len(parts)-1], ".")
@@ -70,6 +70,7 @@ func run() error {
 		return fmt.Errorf("extract: %w", err)
 	}
 
+	doc.Set(e.Config.RefRoot, e.Config.defs)
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "\t")
 	if err := enc.Encode(doc); err != nil {
@@ -83,6 +84,22 @@ func Default() *Extractor {
 		Config: &Config{
 			NameTags:    []string{"json", "yaml", "toml"},
 			OverrideTag: "jsonschema-override",
+			RefRoot:     "$defs",
+			ResolveName: func(c *Config, named *types.Named) string {
+				name := named.Obj().Name()
+				candidates := c.seen[name]
+				if len(candidates) == 1 {
+					return name
+				}
+				for i, t := range candidates {
+					if t == named {
+						return fmt.Sprintf("%s%d", name, i)
+					}
+				}
+				return fmt.Sprintf("%s????", name)
+			},
+			seen: map[string][]types.Type{},
+			defs: map[string]*orderedmap.OrderedMap{},
 		},
 	}
 }
@@ -91,20 +108,48 @@ type Config struct {
 	Loose       bool
 	NameTags    []string
 	OverrideTag string
+	RefRoot     string
+
+	ResolveName func(*Config, *types.Named) string
+	seen        map[string][]types.Type
+	defs        map[string]*orderedmap.OrderedMap
 }
 
 type Extractor struct {
 	Config *Config
 }
 
-func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.Named) (*orderedmap.OrderedMap, error) {
+func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.Type) (*orderedmap.OrderedMap, error) {
 	switch typ := typ.(type) {
 	case *types.Named:
-		return e.Extract(pkg, typ.Underlying(), typ)
+		seen := e.Config.seen
+		name := typ.Obj().Name()
+
+		for _, t := range seen[name] {
+			if t == typ {
+				ret := orderedmap.New()
+				id := e.Config.ResolveName(e.Config, typ)
+				ret.Set("$ref", fmt.Sprintf("#/%s/%s", e.Config.RefRoot, id))
+				return ret, nil
+			}
+		}
+		seen[name] = append(seen[name], typ)
+		doc, err := e.Extract(pkg, typ.Underlying(), append(hist, typ))
+		if err != nil {
+			return nil, err
+		}
+
+		if hist == nil {
+			return doc, nil
+		}
+
+		id := e.Config.ResolveName(e.Config, typ)
+		e.Config.defs[id] = doc
+		ret := orderedmap.New()
+		ret.Set("$ref", fmt.Sprintf("#/%s/%s", e.Config.RefRoot, id))
+		return ret, nil
 	case *types.Struct:
-		doc := orderedmap.New()
-		doc.Set("type", "object")
-		doc.Set("additionalProperties", e.Config.Loose)
+		doc := e.guessType(typ)
 
 		props := orderedmap.New()
 		doc.Set("properties", props)
@@ -132,35 +177,38 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 			if name == "-" {
 				continue
 			}
+
+			// TODO: description
+
+			fieldDef, err := e.Extract(pkg, field.Type(), append(hist, typ))
+			if err != nil {
+				log.Printf("field %s %+v of %s", field, err, typ)
+				continue
+			}
+			props.Set(name, fieldDef)
+
 			if v, ok := tag.Lookup("required"); ok {
 				if v, err := strconv.ParseBool(v); err == nil {
 					required = v
 				}
 			}
-
-			// TODO: guess type
-			// TODO: description
-			fieldDef := guessType(field.Type())
-			if fieldDef != nil {
-				props.Set(name, fieldDef)
-				if v, ok := tag.Lookup(e.Config.OverrideTag); ok {
-					b := []byte(strings.ReplaceAll(strings.ReplaceAll(v, `\`, `\\`), "'", "\""))
-					overrides := orderedmap.New()
-					if err := json.Unmarshal(b, &overrides); err != nil { // enable cache?
-						log.Printf("[WARN]  %s: unmarshal json is failed: %q", e.Config.OverrideTag, err)
-					}
-					for _, k := range overrides.Keys() {
-						v, _ := overrides.Get(k)
-						if k == "required" {
-							required = v.(bool)
-							continue
-						}
-						fieldDef.Set(k, v)
-					}
+			if v, ok := tag.Lookup(e.Config.OverrideTag); ok {
+				b := []byte(strings.ReplaceAll(strings.ReplaceAll(v, `\`, `\\`), "'", "\""))
+				overrides := orderedmap.New()
+				if err := json.Unmarshal(b, &overrides); err != nil { // enable cache?
+					log.Printf("[WARN]  %s: unmarshal json is failed: %q", e.Config.OverrideTag, err)
 				}
-				if required {
-					requiredList = append(requiredList, name)
+				for _, k := range overrides.Keys() {
+					v, _ := overrides.Get(k)
+					if k == "required" {
+						required = v.(bool)
+						continue
+					}
+					fieldDef.Set(k, v)
 				}
+			}
+			if required {
+				requiredList = append(requiredList, name)
 			}
 		}
 
@@ -170,14 +218,18 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, named *types.
 		// TODO: required
 		return doc, nil
 	default:
-		return nil, fmt.Errorf("unexpected type %s", typ)
-		// never
+		doc := e.guessType(typ)
+		if doc == nil {
+			return nil, fmt.Errorf("unexpected type: %T", typ)
+		}
+		return doc, nil
 	}
 }
-func guessType(typ types.Type) *orderedmap.OrderedMap {
+
+func (e *Extractor) guessType(typ types.Type) *orderedmap.OrderedMap {
 	switch t := typ.(type) {
 	case *types.Named:
-		return guessType(t.Underlying())
+		return e.guessType(t.Underlying())
 	case *types.Basic:
 		doc := orderedmap.New()
 		switch t.Kind() {
@@ -197,18 +249,18 @@ func guessType(typ types.Type) *orderedmap.OrderedMap {
 	case *types.Slice:
 		doc := orderedmap.New()
 		doc.Set("type", "array")
-		doc.Set("items", guessType(t.Elem()))
+		doc.Set("items", e.guessType(t.Elem()))
 		return doc
 	case *types.Array:
 		doc := orderedmap.New()
 		doc.Set("type", "array")
 		doc.Set("maxItems", t.Len())
-		doc.Set("items", guessType(t.Elem()))
+		doc.Set("items", e.guessType(t.Elem()))
 		return doc
 	case *types.Map:
 		doc := orderedmap.New()
 		doc.Set("type", "object")
-		doc.Set("additionalProperties", guessType(t.Elem()))
+		doc.Set("additionalProperties", e.guessType(t.Elem()))
 		return doc
 	case *types.Interface:
 		if t.NumMethods() == 0 {
@@ -219,8 +271,13 @@ func guessType(typ types.Type) *orderedmap.OrderedMap {
 			return doc
 		}
 		return nil
+	case *types.Struct:
+		doc := orderedmap.New()
+		doc.Set("type", "object")
+		doc.Set("additionalProperties", e.Config.Loose)
+		return doc
 	default:
-		log.Printf("unexpected type %T", typ)
+		log.Printf("\tunexpected type %T", typ)
 		return nil
 	}
 }

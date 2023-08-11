@@ -27,6 +27,19 @@ type S2 struct {
 	Any      any `jsonschema-override:"{'required': false, 'deprecated': true}"`
 }
 
+type S3 struct {
+	Named   Sub2 `json:"named,omitempty"`
+	Unnamed struct {
+		Name Name `json:"name"`
+	} `json:"unnamed,omitempty"`
+}
+
+type Sub2 struct {
+	Name Name `json:"name"`
+}
+
+type Name string
+
 // TODO:
 // - unexported field
 // - json `-`
