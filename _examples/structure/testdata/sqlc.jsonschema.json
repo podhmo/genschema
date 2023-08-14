@@ -76,7 +76,7 @@
           "type": "string"
         },
         "options": {
-          "type": "go:invalid type"
+          "$ref": "#/$defs/Node"
         }
       },
       "required": [
@@ -171,6 +171,10 @@
         "BuiltIn"
       ]
     },
+    "Kind": {
+      "type": "integer",
+      "minimum": 0
+    },
     "Match": {
       "type": "object",
       "additionalProperties": false,
@@ -183,6 +187,72 @@
           }
         }
       }
+    },
+    "Node": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Kind": {
+          "$ref": "#/$defs/Kind"
+        },
+        "Style": {
+          "$ref": "#/$defs/Style"
+        },
+        "Tag": {
+          "type": "string"
+        },
+        "Value": {
+          "type": "string"
+        },
+        "Anchor": {
+          "type": "string"
+        },
+        "Alias": {
+          "type": "object",
+          "additionalProperties": false,
+          "items": {
+            "$ref": "#/$defs/Node"
+          }
+        },
+        "Content": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "items": {
+              "$ref": "#/$defs/Node"
+            }
+          }
+        },
+        "HeadComment": {
+          "type": "string"
+        },
+        "LineComment": {
+          "type": "string"
+        },
+        "FootComment": {
+          "type": "string"
+        },
+        "Line": {
+          "type": "integer"
+        },
+        "Column": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "Kind",
+        "Style",
+        "Tag",
+        "Value",
+        "Anchor",
+        "Content",
+        "HeadComment",
+        "LineComment",
+        "FootComment",
+        "Line",
+        "Column"
+      ]
     },
     "Override": {
       "type": "object",
@@ -580,6 +650,10 @@
       "required": [
         "out"
       ]
+    },
+    "Style": {
+      "type": "integer",
+      "minimum": 0
     }
   }
 }
