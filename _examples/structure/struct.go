@@ -48,9 +48,11 @@ type Sub2 struct {
 // name of something
 type Name string
 
-// TODO:
-// - unexported field
-// - json `-`
-// - toml,yaml
-// - slices,map
-// - nested
+type S4 struct {
+	Named   Sub2 `json:"named,omitempty"`
+	Unnamed struct {
+		Name Name `json:"name"`
+	} `json:"unnamed,omitempty"`
+
+	Children []S4 `json:"children"`
+}

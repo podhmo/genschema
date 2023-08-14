@@ -116,7 +116,7 @@ func run(e *Extractor, query string) error {
 		refname := e.Config.ResolveName(e.Config, ob.Type().(*types.Named))
 		e.Config.defs[refname] = doc
 		doc = orderedmap.New()
-		doc.Set("$ref", refname)
+		doc.Set("$ref", fmt.Sprintf("#/%s/%s", e.Config.RefRoot, refname))
 	}
 	if len(e.Config.defs) > 0 {
 		doc.Set(e.Config.RefRoot, e.Config.defs)
