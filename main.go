@@ -342,6 +342,8 @@ func (e *Extractor) guessType(typ types.Type) *orderedmap.OrderedMap {
 	switch t := typ.(type) {
 	case *types.Named:
 		return e.guessType(t.Underlying())
+	case *types.Pointer:
+		return e.guessType(t.Elem())
 	case *types.Basic:
 		doc := orderedmap.New()
 		switch t.Kind() {
