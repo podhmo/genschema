@@ -246,7 +246,11 @@ func (e *Extractor) Extract(pkg *packages.Package, typ types.Type, hist []types.
 
 			tag := reflect.StructTag(typ.Tag(i))
 			name := field.Name()
+
 			required := true
+			if _, isPtr := field.Type().(*types.Pointer); isPtr {
+				required = false
+			}
 			for _, nametag := range e.Config.NameTags {
 				if v, ok := tag.Lookup(nametag); ok {
 					v, suffix, _ := strings.Cut(v, ",") // e.g. omitempty with json tag
