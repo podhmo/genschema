@@ -182,10 +182,7 @@
 						"$ref": "#/$defs/Regexp"
 					}
 				}
-			},
-			"required": [
-				"Regexp"
-			]
+			}
 		},
 		"Override": {
 			"type": "object",
@@ -274,10 +271,6 @@
 				"unsigned",
 				"null",
 				"column",
-				"ColumnName",
-				"TableCatalog",
-				"TableSchema",
-				"TableRel",
 				"GoImportPath",
 				"GoPackage",
 				"GoTypeName",
@@ -336,9 +329,7 @@
 				}
 			},
 			"required": [
-				"name",
-				"process",
-				"wasm"
+				"name"
 			]
 		},
 		"Project": {
@@ -426,9 +417,7 @@
 			"required": [
 				"schema",
 				"queries",
-				"database",
 				"strict_function_checks",
-				"strict_order_by",
 				"gen",
 				"codegen",
 				"rules"
