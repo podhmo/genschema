@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=./Configuration.jsonschema.json
+# yaml-language-server: $schema=./oapi-codegen.jsonschema.json
 package: oapigen
 generate:
   models: true
