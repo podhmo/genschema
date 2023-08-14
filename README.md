@@ -1,6 +1,12 @@
 # genschema
 generate jsonschema from go's struct via go/types
 
+## install
+
+```console
+$ go install github.com/podhmo/genschema@latest
+```
+
 ## additional tags
 
 - required
