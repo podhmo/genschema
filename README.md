@@ -10,5 +10,9 @@ generate jsonschema from go's struct via go/types
 
 https://github.com/deepmap/oapi-codegen
 
-- jsonschema https://github.com/podhmo/genschema/blob/main/examples/structure/testdata/Configuration.jsonschema.json
-- conf example https://github.com/podhmo/genschema/blob/main/examples/structure/testdata/oapi-conf.yaml
+```console
+$ genschema -schema-title oapi-conf --query github.com/deepmap/oapi-codegen/pkg/codegen.Configuration > _examples/structure/testdata/oapi-codegen.jsonschema.json
+```
+
+- jsonschema https://github.com/podhmo/genschema/blob/main/examples/structure/testdata/oapi-codegen.jsonschema.json
+- conf example https://github.com/podhmo/genschema/blob/main/examples/structure/testdata/oapi-codegen.yaml
